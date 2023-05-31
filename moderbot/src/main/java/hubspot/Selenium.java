@@ -1,6 +1,5 @@
 package hubspot;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class Selenium {
 		options.addArguments("user-data-dir=C:\\Path");
         options.addArguments("--remote-allow-origins=*");
 		driver = new ChromeDriver(options);
-		wdw = new WebDriverWait(driver, Duration.ofSeconds(10));
+		wdw = new WebDriverWait(driver, 10);
 		
 		driver.get("https://app.hubspot.com/live-messages/23472314/inbox/");
 
