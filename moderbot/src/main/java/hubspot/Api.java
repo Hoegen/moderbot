@@ -6,7 +6,11 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -32,16 +36,29 @@ public class Api {
 	private static final long AllowedMillisBetweenCalls = 1000/allowedCallsPerSecond; 
 	private static OffsetDateTime lastCallTime = OffsetDateTime.now();
 	
+
+	public static String httpRequest(String url, String httpmethod, JSONObject body) throws IOException, InterruptedException {
+		setLastCallTime();
+		HttpRequest request = HttpRequest.newBuilder()
+			    .uri(URI.create(url))
+			    .header("Content-Type", "application/json")
+			    .header("Authorization", token)
+			    .method(httpmethod, HttpRequest.BodyPublishers.ofString(body.toString()))
+			    .build();
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			
+			String strResponse = response.body();
+			if(strResponse.charAt(0) == '[') {
+				return new JSONArray(strResponse).toString(4);
+			}else {
+				return new JSONObject(strResponse).toString(4);
+			}
+	}
+	
 	public static String apiGet(String link) {
 		System.out.println("Calling GET on " + link);
-		setLastCallTime();
 		try {
-			URL url = new URL(link);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestProperty("Authorization", "Bearer " + token);
-			InputStream is = conn.getInputStream();
-			return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-			
+			return httpRequest(link, "GET", null);
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -134,7 +151,7 @@ public class Api {
 		threads = object.getJSONArray("results");
 		
 		for(int i = 0; i < threads.length(); i++) {
-			//se fizer mais do que 23h58m da última mensagem
+			//se fizer mais do que 23h58m da Ãºltima mensagem
 			if(OffsetDateTime.parse(threads.getJSONObject(i).getString("latestMessageTimestamp")).plusMinutes(23*60 + 58).isBefore(OffsetDateTime.now()) ) {
 				threads.remove(i);
 				i--;
@@ -197,7 +214,7 @@ public class Api {
 		JSONObject json = new JSONObject();
 		
 		
-		//Ler documentação, completando os parâmetros, em https://developers.hubspot.com/docs/api/conversations/conversations
+		//Ler documentaÃ§Ã£o, completando os parÃ¢metros, em https://developers.hubspot.com/docs/api/conversations/conversations
 		
 		json.accumulate("type", "MESSAGE");
 		json.accumulate("text", text);
@@ -247,7 +264,7 @@ public class Api {
 			//system.out.println(message.getJSONArray("senders").getJSONObject(0).getString("actorId"));
 			return message.getJSONArray("senders").getJSONObject(0).getString("actorId");
 		}else if(message.getString("direction").equals("INCOMING")) {
-			//system.out.println("VALOR MÍSTICO: CORRIGIR");
+			//system.out.println("VALOR MÃ�STICO: CORRIGIR");
 			return "A-49610131";
 		}
 		return null;
